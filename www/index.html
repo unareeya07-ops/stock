@@ -247,16 +247,16 @@ document.addEventListener('click',async e=>{
 
 /* NFC + RFID tag scanning */
 const nk=x=>String(x).replace(/[^0-9a-z]/gi,'').toUpperCase();
-const NFCP=()=>{const P=window.Capacitor&&Capacitor.Plugins;return P&&(P.Nfc||P.CapacitorNfc)};
+const NFCP=()=>{const P=window.Capacitor&&Capacitor.Plugins;return P&&(P.CapacitorNfc||P.Nfc)};
 let nfcStop=null,tagCtx='look';
 const hex=a=>Array.from(a).map(b=>(b&255).toString(16).padStart(2,'0')).join('').toUpperCase();
 function ndefText(b){let a=Array.from(b||[]);if(a.length>2&&a[0]<64&&(a[0]&63)<8)a=a.slice(1+(a[0]&63));try{return new TextDecoder().decode(new Uint8Array(a)).trim()}catch(e){return''}}
 async function nfcBegin(cb){
  const P=NFCP();
- if(P&&P.startScanSession){
-  const h=await P.addListener('nfcTagScanned',ev=>{const t=ev.nfcTag||{},r=t.message&&t.message.records&&t.message.records[0];cb(t.id?hex(t.id):'',r?ndefText(r.payload):'')});
-  await P.startScanSession();
-  return async()=>{try{await P.stopScanSession()}catch(e){}try{h.remove()}catch(e){}}
+ if(P&&P.startScanning){
+  const h=await P.addListener('nfcEvent',ev=>{const t=ev.tag||{},r=t.ndefMessage&&t.ndefMessage[0];cb(t.id?hex(t.id):'',r?ndefText(r.payload):'')});
+  await P.startScanning({invalidateAfterFirstRead:false});
+  return async()=>{try{await P.stopScanning()}catch(e){}try{await h.remove()}catch(e){}}
  }
  if('NDEFReader' in window){
   const ac=new AbortController(),n=new NDEFReader();await n.scan({signal:ac.signal});
